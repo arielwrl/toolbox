@@ -6,12 +6,11 @@ import starlight_toolkit.plotting as stplot
 import starlight_toolkit.output as stout
 import wololo
 
-#Add one more color to seaborn pallete:
-colors = sns.color_palette()
-colors.append((0.86, 0.33999999999999997, 0.69879999999999964))
 
-band_colors = {'FUV' : colors[5], 'NUV' : colors[0], 'u' : colors[3]
-, 'g' : colors[1], 'r' : colors[2], 'i' : colors[6], 'z' : colors[4] }
+from matplotlib import rc
+
+rc('font', **{'family': 'sans-serif', 'sans-serif': ['Computer Modern']})
+rc('text', usetex=True)
 
 
 def get_pred_interval(x,y,x_fit,y_fit,y_pred,n):
@@ -53,7 +52,9 @@ def errorplot(xdata, ydata, errors, datacolor):
         print('errors =', errors[i])
 
 
-def hist2dscatter(x, y, nbins, threshold_value, axis, ms=1):
+def hist2dscatter(x, y, nbins, threshold_value, axis=None, ms=0.5):
+    if axis==None:
+        axis=plt.gca()
     scatter_contour(x, y, threshold=threshold_value, log_counts=True, ax=axis,
     histogram2d_args=dict(bins=nbins),
     plot_args=dict(marker='.', markersize = ms, linestyle='none'
@@ -83,7 +84,7 @@ def plot_average_in_bins(x, y, label='', color='k', nbins=10, ax=None):
 
 
 def plot_median_in_bins(x, y, label='', color='g', nbins=10, ax=None, plot_percentiles=True, percentiles=[25,75],
-                        percentiles_alpha=0.4, percentiles_color='g', plot_points=True, median_lw=2):
+                        percentiles_alpha=0.4, percentiles_color='g', plot_points=True, median_lw=2, median_ls='-'):
 
     x_flag, x_bins = bin_data(x, nbins)
 
@@ -97,7 +98,7 @@ def plot_median_in_bins(x, y, label='', color='g', nbins=10, ax=None, plot_perce
     if ax==None:
         ax=plt.gca()
 
-    ax.plot(x_values, y_med, color=color, label=label, lw=median_lw)
+    ax.plot(x_values, y_med, color=color, label=label, lw=median_lw, ls=median_ls)
 
     if plot_points==True:
         ax.scatter(x_values, y_med, color=color, edgecolor='k', zorder=10)
@@ -110,20 +111,50 @@ def plot_median_in_bins(x, y, label='', color='g', nbins=10, ax=None, plot_perce
     return x_flag, x_bins
 
 
+def plot_contours(x, y, contour_colors=None, contour_bins=None, hist_range=None, contour_levels=None, ax=None, contour_linewidths=2):
 
-def plot_contours(x, y, contour_colors=None, contour_bins=None, hist_range=None, contour_levels=None, ax=None):
     if ax == None:
         ax = plt.gca()
+
     if contour_bins == None:
         contour_bins = 100
 
     if hist_range == None:
         hist_range = [[np.percentile(x,5),np.percentile(x,95)], [np.percentile(y,5),np.percentile(y,95)]]
 
-    H, xedges, yedges = np.histogram2d(x,y, range=hist_range, bins=contour_bins, normed=True)
+    H, xedges, yedges = np.histogram2d(x,y, range=hist_range, bins=contour_bins)
     extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
 
-    ax.contour(H.transpose(), color=contour_colors, linewidths=2, extent=extent, levels=contour_levels)
+    ax.contour(H.transpose(), colors=contour_colors, linewidths=contour_linewidths, extent=extent, levels=contour_levels)
+
+    # return H, xedges, yedges
+
+
+def plot_contoursf(x, y, contour_colors=None, contour_bins=None, hist_range=None, contour_levels=None, ax=None, contour_cmap=None):
+
+    if ax == None:
+        ax = plt.gca()
+
+    if contour_bins == None:
+        contour_bins = 100
+
+    if hist_range == None:
+        hist_range = [[np.percentile(x,5),np.percentile(x,95)], [np.percentile(y,5),np.percentile(y,95)]]
+
+    H, xedges, yedges = np.histogram2d(x,y, range=hist_range, bins=contour_bins)
+    extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
+
+    ax.contourf(H.transpose(), colors=contour_colors, extent=extent, levels=contour_levels, cmap=contour_cmap, antialiased=True)
+
+    # return H, xedges, yedges
+
+
+def filled_contours(x, y, hist_range=None, contour_bins=None, contour_levels=None, ax=None, fill_cmap='bone_r', contour_color='k'):
+
+    plot_contoursf(x, y, hist_range=hist_range, contour_levels=contour_levels, contour_cmap=fill_cmap, ax=ax, contour_bins=contour_bins)
+    plot_contours(x, y, hist_range=hist_range, contour_levels=contour_levels, contour_colors=contour_color, contour_linewidths=0.5, ax=ax, contour_bins=contour_bins)
+
+
 
 
 
@@ -143,12 +174,14 @@ def plot_starlight_comparison(file_PHO, file_OPT, label1, label2, ax=None):
     #Plot the fit without photometry:
     stplot.plot_spec_simple(out_OPT, ax=axis
                      , syn_color='r', syn_label=label2
-                     , plot_error=False, w0_color='y', PHO_color='gold', PHO_edgecolor='r', PHO_markersize=7)
+                     , plot_error=False, w0_color='y', PHO_color='gold', PHO_edgecolor='r', PHO_markersize=7
+                     , PHO_label=r'$M_Y$', PHO_obs_label=r'$O_Y$')
 
     #Plot fit with photometric constraints:
     stplot.plot_spec_simple(out_PHO, ax=axis
                     , plot_obs=False, syn_label=label1
-                    , plot_error=False, PHO_edgecolor='b', PHO_markersize=7)
+                    , plot_error=False, PHO_edgecolor='b', PHO_markersize=7
+                    , PHO_label=r'$M_Y$', PHO_obs_label=r'$O_Y$')
 
     #z = out_PHO['keywords']['PHO_Redshift']
 
@@ -170,7 +203,8 @@ def plot_starlight_comparison(file_PHO, file_OPT, label1, label2, ax=None):
 
 
 def savitzky_golay(y, window_size, order, deriv=0, rate=1):
-    r"""Smooth (and optionally differentiate) data with a Savitzky-Golay filter.
+    r""" NOT MY ORIGINAL WORK
+    Smooth (and optionally differentiate) data with a Savitzky-Golay filter.
     The Savitzky-Golay filter removes high frequency noise from data.
     It has the advantage of preserving the original shape and
     features of the signal better than other types of filtering
