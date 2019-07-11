@@ -9,13 +9,16 @@ import wololo
 
 from matplotlib import rc
 
-rc('font', **{'family': 'sans-serif', 'sans-serif': ['Computer Modern']})
 rc('text', usetex=True)
+# rc('font', **{'family': 'sans-serif', 'sans-serif': ['Computer Modern']})
 
 
-def get_pred_interval(x,y,x_fit,y_fit,y_pred,n):
+
+def get_pred_interval(x, y, x_fit, y_fit, y_pred, n):
     '''
+
     Gets 2 sigma prediction bands for a fit with n degrees of freedom
+
     '''
 
     #Setting t value
@@ -111,8 +114,20 @@ def plot_median_in_bins(x, y, label='', color='g', nbins=10, ax=None, plot_perce
     return x_flag, x_bins
 
 
-def plot_contours(x, y, contour_colors=None, contour_bins=None, hist_range=None, contour_levels=None, ax=None, contour_linewidths=2):
+def plot_contours(x, y, contour_colors=None, contour_bins=None, hist_range=None, contour_levels=None, ax=None,
+                  contour_linewidths=2):
+    """
 
+    x : x variable
+    y : y variable
+    contour_colors : matplotlib color
+    contour_bins : number of bins in the 2d histogram
+    hist_range : [[x_min, x_max],[y_min,y_max]], if not informed, the code will plot data between 5 and 95% percentiles
+    contour_levels : density levels to plot the contours
+    ax : matplotlib axis to plot
+    contour_linewidths : linewidths of the contours
+
+    """
     if ax == None:
         ax = plt.gca()
 
@@ -120,14 +135,14 @@ def plot_contours(x, y, contour_colors=None, contour_bins=None, hist_range=None,
         contour_bins = 100
 
     if hist_range == None:
-        hist_range = [[np.percentile(x,5),np.percentile(x,95)], [np.percentile(y,5),np.percentile(y,95)]]
+        hist_range = [[np.percentile(x,1),np.percentile(x,99)], [np.percentile(y,1),np.percentile(y,99)]]
 
-    H, xedges, yedges = np.histogram2d(x,y, range=hist_range, bins=contour_bins)
+    H, xedges, yedges = np.histogram2d(x, y, range=hist_range, bins=contour_bins)
     extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
 
-    ax.contour(H.transpose(), colors=contour_colors, linewidths=contour_linewidths, extent=extent, levels=contour_levels)
+    ax.contour(H.transpose(), colors=contour_colors, linewidths=contour_linewidths, extent=extent,
+               levels=contour_levels)
 
-    # return H, xedges, yedges
 
 
 def plot_contoursf(x, y, contour_colors=None, contour_bins=None, hist_range=None, contour_levels=None, ax=None, contour_cmap=None):
@@ -345,3 +360,40 @@ def plot_embedded_SFH(x_main, y_main, x_emb, y_emb, x_bins, y_bins, x_lim, y_lim
 
 
     return ax_list
+
+# Copied from IBM machine learning with python at coursera
+from sklearn.metrics import classification_report, confusion_matrix
+import itertools
+def plot_confusion_matrix(cm, classes,
+                          normalize=False,
+                          title='Confusion matrix',
+                          cmap=plt.cm.Blues):
+    """
+    This function prints and plots the confusion matrix.
+    Normalization can be applied by setting `normalize=True`.
+    """
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        print("Normalized confusion matrix")
+    else:
+        print('Confusion matrix, without normalization')
+
+    print(cm)
+
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45)
+    plt.yticks(tick_marks, classes)
+
+    fmt = '.2f' if normalize else 'd'
+    thresh = cm.max() / 2.
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        plt.text(j, i, format(cm[i, j], fmt),
+                 horizontalalignment="center",
+                 color="white" if cm[i, j] > thresh else "black")
+
+    plt.tight_layout()
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')

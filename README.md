@@ -1,2 +1,2 @@
 # toolbox
-Few tools created to work with astronomical data-sets.
+Some tools created to work with astronomical data-sets.
